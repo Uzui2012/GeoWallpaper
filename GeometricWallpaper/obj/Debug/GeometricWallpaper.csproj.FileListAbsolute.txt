@@ -1,0 +1,10 @@
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\bin\Debug\GeometricWallpaper.exe.config
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\bin\Debug\GeometricWallpaper.exe
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\bin\Debug\GeometricWallpaper.pdb
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\obj\Debug\GeometricWallpaper.csprojAssemblyReference.cache
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\obj\Debug\GeometricWallpaper.Form1.resources
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\obj\Debug\GeometricWallpaper.Properties.Resources.resources
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\obj\Debug\GeometricWallpaper.csproj.GenerateResource.cache
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\obj\Debug\GeometricWallpaper.csproj.CoreCompileInputs.cache
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\obj\Debug\GeometricWallpaper.exe
+C:\Users\killi\Documents\Repositories\GeometricWallpaper\GeometricWallpaper\obj\Debug\GeometricWallpaper.pdb
