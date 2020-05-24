@@ -22,23 +22,43 @@ namespace GeometricWallpaper
 
 		private void btnNew_Click(object sender, EventArgs e)
 		{
-			pBox.ImageLocation = "";
-			Wallpaper.Set(new System.Uri(""), Wallpaper.Style.Centered);
+			this.Invalidate();
 		}
 
-		private void GenerateImage()
+		private int[][] GenerateImage()
 		{
-			Random random = new Random();
-			int numTri = Convert.ToInt16(numTriangles.Value);
-			int[][] vectors = new int[5][];
-			for(int i = 0; i < numTri; i++){
-				
+			Random rand = new Random();
+			int[][] points = new int[25][];
+			for(int i = 0; i < points.Length; i++){
+				points[i] = new int[2];
+				points[i][0] = rand.Next(1, 101) * 5;
+				points[i][1] = rand.Next(1, 101) * 5;
 			}
+			return points;
 
+		}
+
+		private void Form1_Paint(object sender, PaintEventArgs e)
+		{
+			Graphics g = e.Graphics;
+			Pen pen = new Pen(Color.Black, 1);
+			g.DrawLine(pen, 5, 5, 5, 495);
+			g.DrawLine(pen, 5, 5, 995, 5);
+			g.DrawLine(pen, 995, 5, 995, 495);
+			g.DrawLine(pen, 5, 495, 995, 495);
+			int[][] points = GenerateImage();
+			for(int i = 0; i < points.Length; i++){
+				g.DrawLine(pen, points[i][0], points[i][1], points[i][0] + 1, points[i][1] + 1);
+			}
+		}
+
+		private void Form1_Load(object sender, EventArgs e)
+		{
+			this.Paint += Form1_Paint;
 		}
 	}
 
-	
+
 
 	public sealed class Wallpaper
 	{
