@@ -15,9 +15,11 @@ namespace GeometricWallpaper
 {
 	public partial class Form1 : Form
 	{
+		private int maxDist;
 		public Form1()
 		{
 			InitializeComponent();
+			this.maxDist = Convert.ToInt16(numericUpDown1.Value);
 		}
 
 		private void btnNew_Click(object sender, EventArgs e)
@@ -25,36 +27,55 @@ namespace GeometricWallpaper
 			this.Invalidate();
 		}
 
-		private int[][] GenerateImage()
+		private int[][] GeneratePoints()
 		{
 			Random rand = new Random();
-			int[][] points = new int[25][];
+			int[][] points = new int[1000][];
 			for(int i = 0; i < points.Length; i++){
 				points[i] = new int[2];
 				points[i][0] = rand.Next(1, 101) * 5;
 				points[i][1] = rand.Next(1, 101) * 5;
 			}
 			return points;
-
 		}
 
 		private void Form1_Paint(object sender, PaintEventArgs e)
 		{
 			Graphics g = e.Graphics;
 			Pen pen = new Pen(Color.Black, 1);
-			g.DrawLine(pen, 5, 5, 5, 495);
+			g.DrawLine(pen, 5, 5, 5, 500);
 			g.DrawLine(pen, 5, 5, 995, 5);
-			g.DrawLine(pen, 995, 5, 995, 495);
-			g.DrawLine(pen, 5, 495, 995, 495);
-			int[][] points = GenerateImage();
+			g.DrawLine(pen, 995, 5, 995, 500);
+			g.DrawLine(pen, 5, 500, 995, 500);
+			int[][] points = GeneratePoints();
+			
 			for(int i = 0; i < points.Length; i++){
-				g.DrawLine(pen, points[i][0], points[i][1], points[i][0] + 1, points[i][1] + 1);
+				for(int j = 0; j < points.Length; j++){
+					int[] check = { points[i][0], points[i][1], 0 };
+					if(calcDistance(points[i], points[j]) < maxDist){
+						g.DrawLine(pen, points[i][0], points[i][1], points[j][0], points[j][1]);
+					}
+				}
+				pen.Color = Color.Red;
+				g.DrawLine(pen, points[i][0], points[i][1], points[i][0]+1, points[i][1]+1);
+				pen.Color = Color.Black;
 			}
+		}
+		private double calcDistance(int[] p1, int[] p2)
+		{
+			int dx = p2[0] - p1[0];
+			int dy = p2[1] - p1[1];
+			return Math.Sqrt(Convert.ToDouble(dx*dx + dy*dy));
 		}
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
 			this.Paint += Form1_Paint;
+		}
+
+		private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+		{
+			maxDist = Convert.ToInt16(numericUpDown1.Value);
 		}
 	}
 
