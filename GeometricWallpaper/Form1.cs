@@ -1,14 +1,6 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GeometricWallpaper
@@ -31,25 +23,78 @@ namespace GeometricWallpaper
 			Point[] points = generatePoints();
 			Point[] seedTriangle = generateTrianglePoints(points);
 			g.DrawPolygon(pen, seedTriangle);
+
+
+			Point circumCentre = calcCircumCentre(seedTriangle[0], seedTriangle[1], seedTriangle[2]);
+			pen.Color = Color.Red;
+			g.DrawLine(pen, circumCentre.X, circumCentre.Y, circumCentre.X + 1, circumCentre.Y + 1);
+			pen.Color = Color.Black;
+
+			Point[] newPoints = reorderPoints(points, circumCentre);
+			String sNewPoints = "";
+			String sPoints = "";
+			foreach (Point p in newPoints)
+			{
+				sNewPoints = sNewPoints + p.X + ", " + p.Y + ", Dist: " + calcDistance(circumCentre, p) + "\n";
+			}
+			foreach (Point p in points)
+			{
+				sPoints = sPoints + p.X + ", " + p.Y + ", Dist: " + calcDistance(circumCentre, p) + "\n";
+			}
+			MessageBox.Show("POINTS: " + sPoints + "\nSORTEDPOINTS:" + sNewPoints);
+		}
+
+		private Point[] reorderPoints(Point[] points, Point circumCentre)
+		{
+			List<Point> listOfPoints = new List<Point>();
+			for (int i = 0; i < points.Length; i++)
+			{
+				for (int j = 0; j < listOfPoints.Count; j++)
+				{
+					if (calcDistance(points[i], circumCentre) > calcDistance(listOfPoints[j], circumCentre))
+					{
+						listOfPoints.Insert(j, points[i]);
+						goto exitLoop;
+					}
+				}
+				exitLoop:;
+				if(!listOfPoints.Contains(points[i]))
+				{
+					listOfPoints.Add(points[i]);
+				}
+			}
+			String sPoints = "";
+			foreach (Point p in listOfPoints)
+			{
+				sPoints = sPoints + p.X + ", " + p.Y + ", Dist: " + calcDistance(circumCentre, p) + "\n";
+			}
+			MessageBox.Show("Sorted Points:" + sPoints);
+			return listOfPoints.ToArray();
 		}
 
 		private Point[] generateTrianglePoints(Point[] points)
 		{
 			Point x_0 = points[0];
 			Point x_i = points[1];
-			Point x_j = points[1];
-			int curi = 1;
+			Point x_j = points[2];
+			int x_iIndex = 1;
 			for (int i = 1; i < points.Length; i++)
 			{
 				if (calcDistance(x_0, points[i]) < calcDistance(x_0, x_i))
 				{
 					x_i = points[i];
-					curi = i;
+					x_iIndex = i;
 				}
 			}
+			if (x_iIndex != 1)
+			{
+				//MessageBox.Show("x_iIndex != 1");
+				x_j = points[1];
+			}
+
 			for (int j = 1; j < points.Length; j++)
 			{
-				if (curi != j)
+				if (x_iIndex != j)
 				{
 					if (calcDistance(x_0, calcCircumCentre(x_0, x_i, points[j])) < calcDistance(x_0, calcCircumCentre(x_0, x_i, x_j)))
 					{
@@ -61,13 +106,75 @@ namespace GeometricWallpaper
 			return result;
 		}
 
-		private Point calcCircumCentre(Point p1, Point p2, Point p3)
+		private Point calcCircumCentre(Point a, Point b, Point c)
 		{
+			var A = b.X - a.X;
+			var B = b.Y - a.Y;
+			var C = c.X - a.X;
+			var D = c.Y - a.Y;
+			var E = A * (a.X + b.X) + B * (a.Y + b.Y);
+			var F = C * (a.X + c.X) + D * (a.Y + c.Y);
+			var G = 2 * (A * (c.Y - b.Y) - B * (c.X - b.X));
+			double minx;
+			double miny;
+			double dx;
+			double dy;
+
+			double radius;
 			Point circumCenter = new Point();
-			circumCenter.X = ((p1.X * p1.X + p1.Y * p1.Y) * (p2.Y - p3.Y) + (p2.X * p2.X + p2.Y * p2.Y) * (p3.Y - p1.Y) + (p2.X * p3.X + p3.Y * p3.Y) * (p1.Y - p2.Y)) / (2 * (p1.X * (p2.Y - p3.Y) + p2.X * (p3.Y - p1.Y) + p3.X * (p1.Y - p2.Y)));
-			circumCenter.Y = ((p1.X * p1.X + p1.Y * p1.Y) * (p3.Y - p2.Y) + (p2.X * p2.X + p2.Y * p2.Y) * (p1.Y - p3.Y) + (p2.X * p3.X + p3.Y * p3.Y) * (p2.Y - p1.Y)) / (2 * (p1.X * (p2.Y - p3.Y) + p2.X * (p3.Y - p1.Y) + p3.X * (p1.Y - p2.Y)));
-			Rectangle rect = new Rectangle(Convert.ToInt16(circumCenter.X - calcDistance(p1, circumCenter)), Convert.ToInt16(circumCenter.Y-calcDistance(p1, circumCenter)), 2* Convert.ToInt16(calcDistance(p1, circumCenter)), 2*Convert.ToInt16(calcDistance(p1, circumCenter)));
+
+			if (Math.Abs(G) < 0.0001)
+			{
+				minx = Math.Min(a.X, Math.Min(b.X, c.X));
+				miny = Math.Min(a.Y, Math.Min(b.Y, c.Y));
+				dx = (Math.Max(a.X, Math.Max(b.X, c.X)) - minx) * 0.5;
+				dy = (Math.Max(a.Y, Math.Max(b.Y, c.Y)) - miny) * 0.5;
+
+				circumCenter.X = Convert.ToInt16(minx + dx);
+				circumCenter.Y = Convert.ToInt16(miny + dy);
+				radius = Math.Sqrt(dx * dx + dy * dy);
+			}
+
+			else
+			{
+				circumCenter.X = (D * E - B * F) / G;
+				circumCenter.Y = (A * F - C * E) / G;
+				dx = circumCenter.X - a.X;
+				dy = circumCenter.Y - a.Y;
+				radius = Math.Sqrt(dx * dx + dy * dy);
+
+			}
+
+			/*
+			circumCenter.X = ((p1.X * p1.X + p1.Y * p1.Y) * (p2.Y - p3.Y) + (p2.X * p2.X + p2.Y * p2.Y) * (p3.Y - p1.Y) + (p3.X * p3.X + p3.Y * p3.Y) * (p1.Y - p2.Y))
+								/
+								(2 * (p1.X * (p2.Y - p3.Y) + p2.X * (p3.Y - p1.Y) + p3.X * (p1.Y - p2.Y)));
+
+			circumCenter.Y = ((p1.X * p1.X + p1.Y * p1.Y) * (p3.X - p2.X) + (p2.X * p2.X + p2.Y * p2.Y) * (p1.X - p3.X) + (p2.X * p3.X + p3.Y * p3.Y) * (p2.X - p1.X))
+								/
+								(2 * (p1.X * (p2.Y - p3.Y) + p2.X * (p3.Y - p1.Y) + p3.X * (p1.Y - p2.Y)));
+
+			double radius = calcDistance(circumCenter, p1); */
+			/*Point[] triangle = { a, b, c };
+			
+			pen.Color = Color.Red;
+			//g.DrawPolygon(pen, triangle);
+			pen.Color = Color.Blue;
+			//Rectangle rect = new Rectangle(Convert.ToInt16(circumCenter.X - radius), Convert.ToInt16(circumCenter.Y - radius), Convert.ToInt16(radius * 2), Convert.ToInt16(radius * 2));
+			
+			PointF rectOrigin = new PointF((float)(circumCenter.X - radius), (float)(circumCenter.Y - radius));
+			RectangleF rect = new RectangleF(rectOrigin, new SizeF((float)radius * 2F, (float)radius * 2F));
+			Point rp1 = new Point(Convert.ToInt16(rect.X), Convert.ToInt16(rect.Y));
+			Point rp3 = new Point(Convert.ToInt16(rect.X), Convert.ToInt16(rect.Y + rect.Height));
+			Point rp2 = new Point(Convert.ToInt16(rect.X + rect.Width), Convert.ToInt16(rect.Y + rect.Height));
+			Point rp4 = new Point(Convert.ToInt16(rect.X + rect.Width), Convert.ToInt16(rect.Y));
+			Point[] rparray = { rp1, rp4, rp2, rp3 };
+			g.DrawPolygon(pen, rparray);
 			g.DrawEllipse(pen, rect);
+
+			pen.Color = Color.Black;*/
+			//MessageBox.Show("X: " + circumCenter.X + ", Y: " + circumCenter.Y + "\np1:" + p1.ToString() + "\np2:" + p2.ToString() + "\np3:" + p3.ToString() + "\nRad: " + radius);
+
 			return circumCenter;
 		}
 
@@ -79,7 +186,7 @@ namespace GeometricWallpaper
 		private Point[] generatePoints()
 		{
 			Random rand = new Random();
-			Point[] points = new Point[20];
+			Point[] points = new Point[8];
 			List<int> randomXSet = new List<int>();
 			int numX = 0;
 			List<int> randomYSet = new List<int>();
@@ -98,9 +205,9 @@ namespace GeometricWallpaper
 				}
 				randomXSet.Add(numX);
 				randomYSet.Add(numY);
-				points[i].X = numX;
-				points[i].Y = numY;
-				g.DrawLine(pen, points[i].X, points[i].Y, points[i].X+1, points[i].Y+1);
+				points[i].X = numX * 5;
+				points[i].Y = numY * 5;
+				g.DrawLine(pen, points[i].X, points[i].Y, points[i].X + 1, points[i].Y + 1);
 			}
 			return points;
 		}
