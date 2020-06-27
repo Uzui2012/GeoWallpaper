@@ -21,27 +21,13 @@ namespace GeometricWallpaper
 		private void drawLines()
 		{
 			Point[] points = generatePoints();
-			Point[] seedTriangle = generateTrianglePoints(points);
-			g.DrawPolygon(pen, seedTriangle);
-
-
+			Triangle seedTriangle = new Triangle(generateTrianglePoints(points));
+			g.DrawPolygon(pen, seedTriangle.toPoints());
 			Point circumCentre = calcCircumCentre(seedTriangle[0], seedTriangle[1], seedTriangle[2]);
 			pen.Color = Color.Red;
 			g.DrawLine(pen, circumCentre.X, circumCentre.Y, circumCentre.X + 1, circumCentre.Y + 1);
 			pen.Color = Color.Black;
-
-			Point[] newPoints = reorderPoints(points, circumCentre);
-			String sNewPoints = "";
-			String sPoints = "";
-			foreach (Point p in newPoints)
-			{
-				sNewPoints = sNewPoints + p.X + ", " + p.Y + ", Dist: " + calcDistance(circumCentre, p) + "\n";
-			}
-			foreach (Point p in points)
-			{
-				sPoints = sPoints + p.X + ", " + p.Y + ", Dist: " + calcDistance(circumCentre, p) + "\n";
-			}
-			MessageBox.Show("POINTS: " + sPoints + "\nSORTEDPOINTS:" + sNewPoints);
+			Point[] orderedPoints = reorderPoints(points, circumCentre);
 		}
 
 		private Point[] reorderPoints(Point[] points, Point circumCentre)
@@ -51,7 +37,7 @@ namespace GeometricWallpaper
 			{
 				for (int j = 0; j < listOfPoints.Count; j++)
 				{
-					if (calcDistance(points[i], circumCentre) > calcDistance(listOfPoints[j], circumCentre))
+					if (calcDistance(points[i], circumCentre) < calcDistance(listOfPoints[j], circumCentre))
 					{
 						listOfPoints.Insert(j, points[i]);
 						goto exitLoop;
@@ -63,12 +49,13 @@ namespace GeometricWallpaper
 					listOfPoints.Add(points[i]);
 				}
 			}
+			/*
 			String sPoints = "";
 			foreach (Point p in listOfPoints)
 			{
 				sPoints = sPoints + p.X + ", " + p.Y + ", Dist: " + calcDistance(circumCentre, p) + "\n";
 			}
-			MessageBox.Show("Sorted Points:" + sPoints);
+			MessageBox.Show("Sorted Points:\n" + sPoints);*/
 			return listOfPoints.ToArray();
 		}
 
