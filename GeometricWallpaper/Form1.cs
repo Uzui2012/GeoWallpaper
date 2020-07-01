@@ -8,15 +8,14 @@ namespace GeometricWallpaper
 {
 	public partial class Form1 : Form
 	{
-		private int maxDist;
+		private int numPoints;
 		private Pen pen = new Pen(Color.Black, 1);
 		private Graphics g = null;
 
 		public Form1()
 		{
 			InitializeComponent();
-
-			this.maxDist = Convert.ToInt16(numericUpDown1.Value);
+			this.numPoints = Convert.ToInt16(numericUpDown1.Value);
 		}
 
 		private void drawLines()
@@ -25,12 +24,8 @@ namespace GeometricWallpaper
 			Triangle seedTriangle = new Triangle(generateTrianglePoints(points));
 
 			Point circumCentre = calcCircumCentre(seedTriangle[0], seedTriangle[1], seedTriangle[2]);
-			pen.Color = Color.Red;
+			
 			g.DrawPolygon(pen, seedTriangle.toPoints());
-
-			pen.Color = Color.Red;
-			g.DrawLine(pen, circumCentre.X, circumCentre.Y, circumCentre.X + 1, circumCentre.Y + 1);
-			pen.Color = Color.Black;
 
 			List<Point> orderedListOfPoints = reorderPoints(points, circumCentre);
 			orderedListOfPoints.Remove(seedTriangle[0]);
@@ -43,9 +38,9 @@ namespace GeometricWallpaper
 
 			foreach (Point p in orderedListOfPoints)
 			{
+				//MessageBox.Show("");
 				//calculate which points of this convex hull are facets to current p
-				List<Point> facets = new List<Point>();
-				
+				List<Point> facets = new List<Point>();				
 
 				for (int i = 0; i < hull.Count - 1; i++)
 				{
@@ -54,27 +49,29 @@ namespace GeometricWallpaper
 						
 						facets.Add(hull.ElementAt(i));
 						facets.Add(hull.ElementAt(i+1));
-
 					}
 				}
+
 				if (isLeft(hull.ElementAt(hull.Count - 1), hull.ElementAt(0), p) != isLeft(hull.ElementAt(hull.Count - 1), hull.ElementAt(0), calcHullAvg(hull)))
 				{
 					facets.Add(hull.ElementAt(hull.Count - 1));
 					facets.Add(hull.ElementAt(0));
 				}
 
-				facets = facets.Distinct().ToList();
+				//facets = facets.Distinct().ToList();
 
+				//draw to those such points
 				foreach (Point f in facets)
 				{
 					g.DrawLine(pen, p.X, p.Y, f.X, f.Y);
 				}
-				//draw to those such points
 
 				//calculate next current convex hull
-				//hull = getConvexHull(hull);
-				hull = hull.ToArray().OrderBy(x => Math.Atan2(x.X - X.X, x.Y - X.Y)).ToArray().ToList();
-
+				hull = getConvexHull(hull, p);
+				//pen.Color = Color.Red;
+				//g.DrawPolygon(pen, hull.ToArray());
+				//pen.Color = Color.Black;
+				//hull = hull.ToArray().OrderBy(x => Math.Atan2(x.X - X.X, x.Y - X.Y)).ToArray().ToList();
 			}
 
 		}
@@ -101,9 +98,38 @@ namespace GeometricWallpaper
 			return result;
 		}
 
-		private Point[] getConvexHull(Point[] hull)
+		private List<Point> getConvexHull(List<Point> hull, Point p)
 		{
-			return null;
+			hull.Add(p);			
+			hull = hull.ToArray().OrderBy(x => x.X).ToArray().ToList();
+			List<Point> U = new List<Point>();
+			List<Point> L = new List<Point>();
+
+			for(int i = 0; i < hull.Count; i++)
+			{
+				while(L.Count >= 2 && cross(L.ElementAt(L.Count - 2), L.ElementAt(L.Count - 1), hull.ElementAt(i)) <=0)//stuff
+				{
+					L.RemoveAt(L.Count-1);
+				}
+				L.Add(hull.ElementAt(i));
+			}
+			for (int i = hull.Count-1; i >= 0; i--)
+			{
+				while (U.Count >= 2 && cross(U.ElementAt(U.Count - 2), U.ElementAt(U.Count - 1), hull.ElementAt(i)) <= 0)//stuff
+				{
+					U.RemoveAt(U.Count - 1);
+				}
+				U.Add(hull.ElementAt(i));
+			}
+			L.RemoveAt(L.Count - 1);
+			U.RemoveAt(U.Count - 1);
+			L.AddRange(U);
+			return L;
+		}
+
+		private Double cross(Point O, Point A, Point B)
+		{
+			return (A.X - O.X) * (long)(B.Y - O.Y) - (A.Y - O.Y) * (long)(B.X - O.X);
 		}
 
 		private List<Point> reorderPoints(Point[] points, Point circumCentre)
@@ -119,7 +145,7 @@ namespace GeometricWallpaper
 						goto exitLoop;
 					}
 				}
-			exitLoop:;
+				exitLoop:;
 				if (!listOfPoints.Contains(points[i]))
 				{
 					listOfPoints.Add(points[i]);
@@ -186,7 +212,7 @@ namespace GeometricWallpaper
 			double radius;
 			Point circumCenter = new Point();
 
-			if (Math.Abs(G) < 0.0001)
+			if (Math.Abs(G) < 0.00001)
 			{
 				minx = Math.Min(a.X, Math.Min(b.X, c.X));
 				miny = Math.Min(a.Y, Math.Min(b.Y, c.Y));
@@ -249,11 +275,12 @@ namespace GeometricWallpaper
 		private Point[] generatePoints()
 		{
 			Random rand = new Random();
-			Point[] points = new Point[8];
+			Point[] points = new Point[numPoints];
 			List<int> randomXSet = new List<int>();
 			int numX = 0;
 			List<int> randomYSet = new List<int>();
 			int numY = 0;
+			int count = 1;
 			for (int i = 0; i < points.Length; i++)
 			{
 				numX = rand.Next(1, 101);
@@ -261,15 +288,17 @@ namespace GeometricWallpaper
 				while (randomXSet.Contains(numX))
 				{
 					numX = rand.Next(1, 101);
+					count++;
 				}
 				while (randomYSet.Contains(numY))
 				{
 					numY = rand.Next(1, 101);
+					count++;
 				}
 				randomXSet.Add(numX);
 				randomYSet.Add(numY);
-				points[i].X = numX * 5;
-				points[i].Y = numY * 5;
+				points[i].X = numX *8;
+				points[i].Y = numY *5;
 				g.DrawLine(pen, points[i].X, points[i].Y, points[i].X + 1, points[i].Y + 1);
 			}
 			return points;
@@ -284,7 +313,7 @@ namespace GeometricWallpaper
 
 		private void numericUpDown1_ValueChanged(object sender, EventArgs e)
 		{
-			maxDist = Convert.ToInt16(numericUpDown1.Value);
+			numPoints = Convert.ToInt16(numericUpDown1.Value);
 		}
 
 		private void canvasPanel_Paint(object sender, PaintEventArgs e)

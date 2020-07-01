@@ -48,7 +48,7 @@
 			// 
 			this.numericUpDown1.Location = new System.Drawing.Point(943, 867);
 			this.numericUpDown1.Minimum = new decimal(new int[] {
-            20,
+            4,
             0,
             0,
             0});
