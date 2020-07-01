@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace GeometricWallpaper
@@ -22,15 +23,90 @@ namespace GeometricWallpaper
 		{
 			Point[] points = generatePoints();
 			Triangle seedTriangle = new Triangle(generateTrianglePoints(points));
-			g.DrawPolygon(pen, seedTriangle.toPoints());
+
 			Point circumCentre = calcCircumCentre(seedTriangle[0], seedTriangle[1], seedTriangle[2]);
+			pen.Color = Color.Red;
+			g.DrawPolygon(pen, seedTriangle.toPoints());
+
 			pen.Color = Color.Red;
 			g.DrawLine(pen, circumCentre.X, circumCentre.Y, circumCentre.X + 1, circumCentre.Y + 1);
 			pen.Color = Color.Black;
-			Point[] orderedPoints = reorderPoints(points, circumCentre);
+
+			List<Point> orderedListOfPoints = reorderPoints(points, circumCentre);
+			orderedListOfPoints.Remove(seedTriangle[0]);
+			orderedListOfPoints.Remove(seedTriangle[1]);
+			orderedListOfPoints.Remove(seedTriangle[2]);
+
+			List<Point> hull = seedTriangle.toPoints().ToList();
+			Point X = calcCircumCentre(seedTriangle[0], seedTriangle[1], seedTriangle[2]);
+			hull = hull.ToArray().OrderBy(x => Math.Atan2(x.X - X.X, x.Y - X.Y)).ToArray().ToList();
+
+			foreach (Point p in orderedListOfPoints)
+			{
+				//calculate which points of this convex hull are facets to current p
+				List<Point> facets = new List<Point>();
+				
+
+				for (int i = 0; i < hull.Count - 1; i++)
+				{
+					if (isLeft(hull.ElementAt(i), hull.ElementAt(i + 1), p) != isLeft(hull.ElementAt(i), hull.ElementAt(i + 1), calcHullAvg(hull)))
+					{
+						
+						facets.Add(hull.ElementAt(i));
+						facets.Add(hull.ElementAt(i+1));
+
+					}
+				}
+				if (isLeft(hull.ElementAt(hull.Count - 1), hull.ElementAt(0), p) != isLeft(hull.ElementAt(hull.Count - 1), hull.ElementAt(0), calcHullAvg(hull)))
+				{
+					facets.Add(hull.ElementAt(hull.Count - 1));
+					facets.Add(hull.ElementAt(0));
+				}
+
+				facets = facets.Distinct().ToList();
+
+				foreach (Point f in facets)
+				{
+					g.DrawLine(pen, p.X, p.Y, f.X, f.Y);
+				}
+				//draw to those such points
+
+				//calculate next current convex hull
+				//hull = getConvexHull(hull);
+				hull = hull.ToArray().OrderBy(x => Math.Atan2(x.X - X.X, x.Y - X.Y)).ToArray().ToList();
+
+			}
+
 		}
 
-		private Point[] reorderPoints(Point[] points, Point circumCentre)
+		private bool isLeft(Point a, Point b, Point c)
+		{
+			return ((b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X)) > 0;
+		}
+
+		private Point calcHullAvg(List<Point> hull)
+		{
+			double avgX = 0, avgY = 0;
+			foreach (Point p in hull)
+			{
+				avgX = avgX + p.X;
+				avgY = avgY + p.Y;
+			}
+			avgX = avgX / hull.Count;
+			avgY = avgY / hull.Count;
+			Point result = new Point((int)avgX, (int)avgY);
+			//pen.Color = Color.Blue;
+			//g.DrawLine(pen, result.X, result.Y, result.X + 3, result.Y);
+			//pen.Color = Color.Black;
+			return result;
+		}
+
+		private Point[] getConvexHull(Point[] hull)
+		{
+			return null;
+		}
+
+		private List<Point> reorderPoints(Point[] points, Point circumCentre)
 		{
 			List<Point> listOfPoints = new List<Point>();
 			for (int i = 0; i < points.Length; i++)
@@ -43,8 +119,8 @@ namespace GeometricWallpaper
 						goto exitLoop;
 					}
 				}
-				exitLoop:;
-				if(!listOfPoints.Contains(points[i]))
+			exitLoop:;
+				if (!listOfPoints.Contains(points[i]))
 				{
 					listOfPoints.Add(points[i]);
 				}
@@ -56,7 +132,7 @@ namespace GeometricWallpaper
 				sPoints = sPoints + p.X + ", " + p.Y + ", Dist: " + calcDistance(circumCentre, p) + "\n";
 			}
 			MessageBox.Show("Sorted Points:\n" + sPoints);*/
-			return listOfPoints.ToArray();
+			return listOfPoints;
 		}
 
 		private Point[] generateTrianglePoints(Point[] points)
@@ -143,12 +219,12 @@ namespace GeometricWallpaper
 
 			double radius = calcDistance(circumCenter, p1); */
 			/*Point[] triangle = { a, b, c };
-			
+
 			pen.Color = Color.Red;
 			//g.DrawPolygon(pen, triangle);
 			pen.Color = Color.Blue;
 			//Rectangle rect = new Rectangle(Convert.ToInt16(circumCenter.X - radius), Convert.ToInt16(circumCenter.Y - radius), Convert.ToInt16(radius * 2), Convert.ToInt16(radius * 2));
-			
+
 			PointF rectOrigin = new PointF((float)(circumCenter.X - radius), (float)(circumCenter.Y - radius));
 			RectangleF rect = new RectangleF(rectOrigin, new SizeF((float)radius * 2F, (float)radius * 2F));
 			Point rp1 = new Point(Convert.ToInt16(rect.X), Convert.ToInt16(rect.Y));
